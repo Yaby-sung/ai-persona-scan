@@ -413,7 +413,7 @@ body{min-height:100vh;background:
           <li><strong style="color:#f5f0e8">Aesthetic</strong> · 你的視覺世界觀（12 風格 + 60/30/10 色票）</li>
           <li><strong style="color:#f5f0e8">Social</strong> · 你在社群上的存在方式（5 型態 + 13 感知 + 人格保護）</li>
         </ul>
-        <a class="btn" href="#" onclick="return false">進入完整 4 層 · 建構你的品牌角色宇宙</a>
+        <a class="btn" id="bu-cta" href="#">預約品牌對話 · 建構完整品牌角色宇宙</a>
       </div>
     </div>
 
@@ -1155,27 +1155,27 @@ const BRAND_UNIVERSE = {
 const BRIDGES = {
   soul:{
     intro:'你的 Shadow Layer 在 Soul Core。\n\n不是缺口——是你還沒對自己說清楚那個內核驅動引擎。',
-    title:'Phase I｜靈魂建議書 會帶你進入：',
+    title:'AI Persona 個人定位探索 會幫你打開：',
     items:['你的 12 種天賦原型完整定位','你的 XYZ 三軸 AI 時代角色','你的能力 × 願景 × 價值觀三圓交集','你內在驅動引擎的詩意命名'],
-    cta:'進入 Phase I'
+    cta:'預約 1 對 1 諮詢 · 打開你的內核'
   },
   voice:{
     intro:'你的 Shadow Layer 在 Voice DNA。\n\n不是缺口——是你的思考還沒找到精準的語言通道。',
-    title:'Phase A｜口吻 DNA 報告 會帶你進入：',
+    title:'AI Persona 口吻 DNA 探索 會幫你打開：',
     items:['你最常用的 5 個詞彙 + 3 個句型 + 2 個比喻','你的情緒溫度光譜（基準 °C + 4 場合溫度）','你的口吻禁區地圖（紅線 + 軟禁區）','一段可以直接複製到 ChatGPT / Claude 的 AI 代言人指令'],
-    cta:'進入 Phase A'
+    cta:'預約 1 對 1 諮詢 · 打開你的語言'
   },
   aesthetic:{
     intro:'你的 Shadow Layer 在 Aesthetic Frequency。\n\n不是缺口——是你眼睛裡已經住著一個世界，但還沒被翻譯成 AI 聽得懂的視覺語言。',
-    title:'Phase B｜美感配方卡 會帶你進入：',
+    title:'AI Persona 品牌角色宇宙 會幫你打開：',
     items:['你在 12 種風格參考裡的完整定位','你的 60/30/10 個人色票（含 hex 色碼）','你的視覺意象庫 + 視覺禁區地圖','一段可以直接複製到 Midjourney / Sora 的視覺 prompt'],
-    cta:'進入 Phase B'
+    cta:'預約 1 對 1 諮詢 · 打開你的美感'
   },
   social:{
     intro:'你的 Shadow Layer 在 Social Signal。\n\n不是缺口——是你的存在還沒找到對的傳播軌道。',
-    title:'Phase C｜社群人格 DNA 卡 會帶你進入：',
+    title:'AI Persona 社群存在系統 會幫你打開：',
     items:['你的主型態 × 副型態 × 能量模式完整解析','你的社群氣味 + 同類辨識地圖','你會持續說的 3 個內容支柱','你的人格保護協議（AI 替你守的邊界）'],
-    cta:'進入 Phase C'
+    cta:'預約 1 對 1 諮詢 · 打開你的磁場'
   }
 };
 
@@ -1220,6 +1220,23 @@ function decodeAnswers(code){
 function getShareUrl(code){
   const base = window.location.origin + window.location.pathname;
   return `${base}?p=${code}`;
+}
+
+/* Build consult URL → directs to official 小鹿 AI 商業落地實驗室 with Persona context */
+const OFFICIAL_BASE = 'https://ai-persona-steel.vercel.app';
+function buildConsultUrl(R){
+  if(!R) return OFFICIAL_BASE + '/#invitation';
+  const universe = (typeof BRAND_UNIVERSE !== 'undefined' && BRAND_UNIVERSE[R.sigKey]) ? BRAND_UNIVERSE[R.sigKey] : {type:''};
+  const params = new URLSearchParams({
+    persona: R.sig.zh,
+    en: R.sig.en,
+    type: universe.type || '',
+    shadow: R.shadow,
+    dom: R.dominant,
+    sec: R.secondary,
+    code: encodeAnswers(answers)
+  });
+  return `${OFFICIAL_BASE}/?${params.toString()}#invitation`;
 }
 function getHost(){
   return (window.location.hostname || 'ai-persona-scan') + (window.location.pathname.replace(/\/$/,'').split('/').pop() === 'index.html' ? '' : window.location.pathname.replace(/\/$/,''));
@@ -1431,13 +1448,22 @@ function renderResult(R){
 
   // Shadow + Bridge
   const br = BRIDGES[shadow];
+  const consultUrl = buildConsultUrl(R);
   document.getElementById('shadow-intro').textContent = br.intro;
   document.getElementById('bridge').innerHTML = `
-    <div class="bridge-head">Shadow → Phase Bridge</div>
+    <div class="bridge-head">Shadow → 預約諮詢</div>
     <div class="bridge-title">${br.title}</div>
     <ul class="bridge-list">${br.items.map(i=>`<li>${i}</li>`).join('')}</ul>
-    <a class="btn" href="#" onclick="return false">${br.cta}</a>
+    <a class="btn" href="${consultUrl}" target="_blank" rel="noopener">${br.cta}</a>
   `;
+
+  // Brand Universe CTA — also points to official site
+  const buBtn = document.getElementById('bu-cta');
+  if(buBtn){
+    buBtn.href = consultUrl;
+    buBtn.target = '_blank';
+    buBtn.rel = 'noopener';
+  }
 }
 
 /* ─── extract tags per layer from answers ─── */
