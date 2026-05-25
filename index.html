@@ -1222,10 +1222,23 @@ function getShareUrl(code){
   return `${base}?p=${code}`;
 }
 
-/* Build consult URL → directs to official 小鹿 AI 商業落地實驗室 with Persona context */
+/* Build consult URL → directs to official 小鹿 AI 商業落地實驗室 with Persona context
+   Shadow Layer 分流：
+     Soul / Voice  → 服務 I  · 個人定位探索（#service-persona）
+     Aesthetic     → 服務 II · 品牌角色宇宙（#service-universe）
+     Social        → 服務 III · 商業轉譯系統（#service-translation）
+     Brand CTA     → 強制 #service-universe（完整角色宇宙）
+*/
 const OFFICIAL_BASE = 'https://ai-persona-steel.vercel.app';
-function buildConsultUrl(R){
+const SHADOW_TO_SERVICE = {
+  soul:'service-persona',
+  voice:'service-persona',
+  aesthetic:'service-universe',
+  social:'service-translation'
+};
+function buildConsultUrl(R, forceTarget){
   if(!R) return OFFICIAL_BASE + '/#invitation';
+  const target = forceTarget || SHADOW_TO_SERVICE[R.shadow] || 'invitation';
   const universe = (typeof BRAND_UNIVERSE !== 'undefined' && BRAND_UNIVERSE[R.sigKey]) ? BRAND_UNIVERSE[R.sigKey] : {type:''};
   const params = new URLSearchParams({
     persona: R.sig.zh,
@@ -1236,7 +1249,7 @@ function buildConsultUrl(R){
     sec: R.secondary,
     code: encodeAnswers(answers)
   });
-  return `${OFFICIAL_BASE}/?${params.toString()}#invitation`;
+  return `${OFFICIAL_BASE}/?${params.toString()}#${target}`;
 }
 function getHost(){
   return (window.location.hostname || 'ai-persona-scan') + (window.location.pathname.replace(/\/$/,'').split('/').pop() === 'index.html' ? '' : window.location.pathname.replace(/\/$/,''));
@@ -1446,21 +1459,21 @@ function renderResult(R){
   document.getElementById('sc-quote').textContent = chosenQuote;
   document.getElementById('sc-url').textContent = getHost();
 
-  // Shadow + Bridge
+  // Shadow + Bridge → 依 Shadow 自動分流到對應服務段落
   const br = BRIDGES[shadow];
-  const consultUrl = buildConsultUrl(R);
+  const shadowUrl = buildConsultUrl(R);  // 自動 routing by shadow
   document.getElementById('shadow-intro').textContent = br.intro;
   document.getElementById('bridge').innerHTML = `
     <div class="bridge-head">Shadow → 預約諮詢</div>
     <div class="bridge-title">${br.title}</div>
     <ul class="bridge-list">${br.items.map(i=>`<li>${i}</li>`).join('')}</ul>
-    <a class="btn" href="${consultUrl}" target="_blank" rel="noopener">${br.cta}</a>
+    <a class="btn" href="${shadowUrl}" target="_blank" rel="noopener">${br.cta}</a>
   `;
 
-  // Brand Universe CTA — also points to official site
+  // Brand Universe CTA — 固定指向 #service-universe（完整品牌角色宇宙服務）
   const buBtn = document.getElementById('bu-cta');
   if(buBtn){
-    buBtn.href = consultUrl;
+    buBtn.href = buildConsultUrl(R, 'service-universe');
     buBtn.target = '_blank';
     buBtn.rel = 'noopener';
   }
