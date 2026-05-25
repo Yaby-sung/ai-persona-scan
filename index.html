@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Persona Mini Scan</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a1a;
+  --bg-2:#0f0f25;
+  --ink:#e6dfd0;
+  --ink-dim:#b0a890;
+  --gold:#c9a96e;
+  --gold-soft:#c9a96ed8;
+  --gold-faint:#c9a96e33;
+  --line:#c9a96e2a;
+  --accent:#5BA8C7;
+  --warm:#f5f0e8;
+  --serif:'Noto Serif TC',serif;
+  --sans:'Noto Sans TC',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --italic:'Cormorant Garamond',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:300;line-height:1.7;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background:
+  radial-gradient(ellipse at top, #15152e 0%, var(--bg) 60%),
+  var(--bg);background-attachment:fixed}
+.app{max-width:720px;margin:0 auto;padding:48px 28px 96px;position:relative}
+.screen{display:none;animation:fadeIn .6s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ─── header bar ─── */
+.brand{display:flex;justify-content:space-between;align-items:center;margin-bottom:64px;font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase}
+.brand .dot{display:inline-block;width:6px;height:6px;background:var(--gold);border-radius:50%;margin-right:8px;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ─── YJ Brand Logo (placeholder · swap with real PNG/SVG when ready) ─── */
+.yj-logo{display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--gold);border-radius:50%;font-family:var(--italic);font-style:italic;color:var(--gold);font-weight:400;letter-spacing:.04em;flex-shrink:0;background:transparent;line-height:1;text-decoration:none;transition:all .3s}
+.yj-logo.sm{width:34px;height:34px;font-size:14px;border-width:1.2px}
+.yj-logo.lg{width:100px;height:100px;font-size:40px;border-width:2px}
+.yj-logo:hover{background:var(--gold-faint)}
+/* image-version of logo (when real file is added) */
+.yj-logo-img{display:inline-block;flex-shrink:0;object-fit:contain;background:transparent}
+.yj-logo-img.sm{width:36px;height:36px}
+.yj-logo-img.lg{width:108px;height:108px}
+/* black-bg PNG fallback: blend mode removes black, lets gold show on dark navy */
+.yj-logo-img.blend-black{mix-blend-mode:screen}
+.brand-id{display:inline-flex;align-items:center;gap:14px}
+.hero-logo{display:flex;justify-content:center;margin-bottom:40px}
+.powered-by{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:48px;padding-top:32px;border-top:1px solid var(--line)}
+.powered-text{font-family:var(--mono);font-size:11px;letter-spacing:.36em;color:var(--gold);text-transform:uppercase}
+
+/* ─── intro ─── */
+.intro-tag{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--gold);margin-bottom:24px;text-transform:uppercase}
+.intro-title{font-family:var(--serif);font-size:38px;font-weight:300;line-height:1.4;margin-bottom:24px;letter-spacing:.04em}
+.intro-title em{font-family:var(--italic);font-style:italic;color:var(--gold);font-weight:400}
+.intro-sub{color:var(--ink);font-size:15px;letter-spacing:.05em;margin-bottom:48px}
+.intro-meta{display:flex;gap:32px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:.1em;margin-bottom:64px;flex-wrap:wrap}
+.intro-meta span{display:inline-flex;align-items:center;gap:6px}
+.intro-meta span::before{content:'';width:4px;height:4px;background:var(--gold);display:inline-block}
+
+/* ─── buttons ─── */
+.btn{font-family:var(--mono);font-size:14px;letter-spacing:.2em;color:var(--bg);background:var(--gold);border:1.5px solid var(--gold);padding:20px 42px;cursor:pointer;text-transform:uppercase;transition:all .3s;display:inline-block;text-decoration:none;font-weight:500;line-height:1.4}
+.btn:hover{background:transparent;color:var(--gold);box-shadow:0 0 24px var(--gold-faint)}
+.btn-ghost{background:transparent;border-color:var(--ink-dim);color:var(--ink-dim);font-weight:400}
+.btn-ghost:hover{background:transparent;color:var(--gold);border-color:var(--gold);box-shadow:none}
+.btn-text{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--ink-dim);text-decoration:none;border:none;background:transparent;padding:6px 0;cursor:pointer;display:inline-block;border-bottom:1px dotted var(--ink-dim);transition:all .3s}
+.btn-text:hover{color:var(--gold);border-color:var(--gold)}
+
+/* ─── question ─── */
+.q-meta{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--gold);margin-bottom:24px;display:flex;justify-content:space-between;align-items:center}
+.q-progress{flex:1;height:1px;background:var(--gold-faint);margin:0 16px;position:relative}
+.q-progress::after{content:'';position:absolute;left:0;top:0;height:100%;background:var(--gold);width:var(--p,10%);transition:width .4s}
+.q-layer{font-family:var(--italic);font-style:italic;color:var(--gold);font-size:13px}
+.q-text{font-family:var(--serif);font-size:24px;font-weight:300;line-height:1.55;margin-bottom:40px;letter-spacing:.02em;color:var(--warm)}
+.q-options{display:flex;flex-direction:column;gap:14px}
+.opt{display:flex;align-items:flex-start;gap:18px;padding:20px 24px;border:1px solid var(--line);background:transparent;cursor:pointer;text-align:left;color:var(--ink);transition:all .25s;font-family:var(--sans);font-size:15px;line-height:1.6;font-weight:300}
+.opt:hover{border-color:var(--gold);background:var(--gold-faint)}
+.opt .letter{font-family:var(--italic);font-style:italic;color:var(--gold);font-size:18px;line-height:1;padding-top:2px;min-width:18px}
+.opt .text{flex:1}
+
+/* ─── scanning ─── */
+.scan-wrap{padding-top:96px;text-align:left}
+.scan-log{font-family:var(--mono);font-size:14px;line-height:2.1;color:var(--ink);letter-spacing:.04em;white-space:pre-wrap}
+.scan-log .done{color:var(--gold)}
+.scan-log .head{color:var(--warm)}
+.scan-cursor{display:inline-block;width:8px;height:14px;background:var(--gold);animation:blink 1s infinite;vertical-align:middle;margin-left:2px}
+
+/* ─── result ─── */
+.r-section{margin-bottom:72px}
+.r-tag{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--gold);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.r-tag::before{content:'';width:24px;height:1px;background:var(--gold)}
+
+/* signature */
+.sig{text-align:center;padding:48px 0 24px}
+.sig-rom{font-family:var(--italic);font-style:italic;color:var(--gold);font-size:15px;letter-spacing:.4em;margin-bottom:24px}
+.sig-name-zh{font-family:var(--serif);font-size:54px;font-weight:300;color:var(--warm);letter-spacing:.18em;line-height:1.2;margin-bottom:18px}
+.sig-name-en{font-family:var(--italic);font-style:italic;color:var(--gold);font-size:20px;letter-spacing:.18em;margin-bottom:32px}
+.sig-compo{font-family:var(--mono);font-size:13px;color:var(--gold-soft);letter-spacing:.22em;margin-bottom:28px}
+.sig-line{width:60px;height:1px;background:var(--gold-soft);margin:0 auto 28px}
+.sig-tag{font-family:var(--serif);font-size:18px;color:var(--ink);line-height:1.8;max-width:520px;margin:0 auto;font-weight:300}
+
+/* layers detail */
+.layers-detail{display:flex;flex-direction:column;gap:20px}
+.layer-row{padding:24px 0;border-top:1px solid var(--line)}
+.layer-row:last-child{border-bottom:1px solid var(--line)}
+.layer-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.layer-name{font-family:var(--mono);font-size:13px;letter-spacing:.2em;color:var(--warm);text-transform:uppercase}
+.layer-name .vol{font-family:var(--italic);font-style:italic;color:var(--gold);margin-right:10px}
+.layer-score{font-family:var(--mono);font-size:28px;color:var(--gold);letter-spacing:.06em}
+.layer-bar{height:2px;background:var(--gold-faint);margin-bottom:14px;position:relative;overflow:hidden}
+.layer-bar::after{content:'';position:absolute;left:0;top:0;height:100%;background:var(--gold);width:var(--w,0%);animation:barGrow 1.2s ease-out}
+@keyframes barGrow{from{width:0}}
+.layer-tags{display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--ink);line-height:1.7}
+.layer-tags .k{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;display:inline-block;min-width:96px}
+.layer-tags .v{color:var(--ink)}
+
+/* radar */
+.radar-wrap{text-align:center;padding:24px 0}
+.radar-note{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:.16em;margin-top:20px;text-transform:uppercase}
+
+/* segments (AI 看見你的話) */
+.segs{display:flex;flex-direction:column;gap:36px;padding-top:8px}
+.seg{padding-left:24px;border-left:1px solid var(--gold-faint)}
+.seg-head{font-family:var(--italic);font-style:italic;color:var(--gold);font-size:13px;letter-spacing:.2em;margin-bottom:14px}
+.seg-body{font-family:var(--serif);font-size:17px;line-height:2.1;color:var(--warm);font-weight:300;white-space:pre-line}
+
+/* soul quote */
+.quote{text-align:center;padding:48px 24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative}
+.quote-mark{font-family:var(--italic);font-style:italic;color:var(--gold-soft);font-size:32px;line-height:1;margin-bottom:14px}
+.quote-body{font-family:var(--serif);font-size:22px;line-height:1.7;color:var(--warm);font-weight:300;max-width:540px;margin:0 auto;letter-spacing:.02em}
+
+/* shadow bridge */
+.shadow-intro{font-family:var(--serif);font-size:17px;line-height:2;color:var(--ink);margin-bottom:32px;white-space:pre-line;font-weight:300}
+.shadow-intro .em{color:var(--gold)}
+.bridge{padding:32px;border:1px solid var(--line);background:linear-gradient(180deg,transparent,#c9a96e08)}
+.bridge-head{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--gold);margin-bottom:18px;text-transform:uppercase}
+.bridge-title{font-family:var(--serif);font-size:22px;color:var(--warm);margin-bottom:24px;font-weight:300;letter-spacing:.03em}
+.bridge-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:28px;color:var(--ink);font-size:15px;line-height:1.8}
+.bridge-list li::before{content:'✦';color:var(--gold);margin-right:12px}
+
+/* closing */
+.closing{text-align:center;padding:64px 0 24px}
+.closing-rule{width:120px;height:1px;background:var(--gold-soft);margin:0 auto 32px}
+.closing-text{font-family:var(--serif);font-size:16px;line-height:2.1;color:var(--ink);white-space:pre-line;margin-bottom:32px}
+.closing-text .strong{color:var(--warm);font-weight:400}
+.closing-foot{font-family:var(--mono);font-size:13px;color:var(--ink);letter-spacing:.22em;margin-top:48px;text-transform:uppercase}
+
+/* footer (protection note) */
+.footer{margin-top:64px;padding-top:32px;border-top:1px solid var(--line);font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--ink);letter-spacing:.08em;text-align:center}
+.footer a{color:var(--gold);text-decoration:none;border-bottom:1px dotted var(--gold)}
+
+/* ─── share section · 分享（簡化版・單鍵原生分享） ─── */
+.share-wrap{padding:8px 0;text-align:center}
+.share-lead{font-family:var(--serif);font-size:18px;line-height:1.9;color:var(--ink);margin-bottom:36px;font-weight:300;letter-spacing:.03em}
+.share-note{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:.16em;margin-top:24px;text-transform:uppercase;line-height:1.8}
+
+/* ─── toast ─── */
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--bg);padding:14px 30px;font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;font-weight:500;z-index:1000;animation:toastIn .3s ease,toastOut .3s ease 1.7s forwards}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes toastOut{to{opacity:0;transform:translate(-50%,20px)}}
+
+/* ─── friend intro screen (when URL has ?p=XXX) ─── */
+.friend-tag{font-family:var(--mono);font-size:12px;letter-spacing:.32em;color:var(--gold);margin-bottom:28px;text-transform:uppercase;text-align:center}
+.friend-lead{font-family:var(--serif);font-size:17px;color:var(--ink);margin-bottom:8px;font-weight:300;line-height:1.9;text-align:center}
+.friend-lead-em{color:var(--warm);font-weight:400;letter-spacing:.03em}
+.friend-belong{font-family:var(--italic);font-style:italic;font-size:18px;color:var(--gold);text-align:center;letter-spacing:.18em;margin:24px 0 18px}
+.friend-name{font-family:var(--serif);font-size:64px;color:var(--warm);letter-spacing:.16em;line-height:1.2;margin-bottom:18px;font-weight:300;text-align:center}
+.friend-en{font-family:var(--italic);font-style:italic;color:var(--gold);font-size:22px;letter-spacing:.18em;margin-bottom:48px;text-align:center}
+.friend-block{margin-bottom:36px;padding:24px 28px;border:1px solid var(--line);background:linear-gradient(180deg,transparent,#c9a96e06)}
+.friend-block-tag{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--gold);text-align:center;margin-bottom:14px;text-transform:uppercase}
+.friend-block-body{font-family:var(--serif);font-size:16px;line-height:1.9;color:var(--ink);font-weight:300;letter-spacing:.02em;text-align:center}
+.friend-universe-type{font-family:var(--serif);font-size:22px;color:var(--warm);text-align:center;margin-bottom:10px;font-weight:400;letter-spacing:.06em}
+.friend-divider{width:80px;height:1px;background:var(--gold-soft);margin:48px auto 32px}
+.friend-cta-text{font-family:var(--serif);font-size:22px;color:var(--warm);margin-bottom:28px;font-weight:300;letter-spacing:.05em;text-align:center;line-height:1.7}
+#screen-friend{text-align:center}
+#screen-friend .btn{display:inline-block}
+
+/* ─── hidden share card (1080×1350) for html2canvas capture ─── */
+#share-card-wrap{position:fixed;top:-99999px;left:-99999px;pointer-events:none;opacity:1}
+#share-card{width:1080px;height:1350px;background:linear-gradient(180deg,#15152e 0%,#0a0a1a 60%,#0a0a1a 100%);box-sizing:border-box;padding:90px 90px 80px;display:flex;flex-direction:column;justify-content:space-between;font-family:'Noto Serif TC',serif;color:#e6dfd0;position:relative;border:3px solid #c9a96e}
+#share-card::before{content:'';position:absolute;inset:18px;border:1px solid #c9a96e44;pointer-events:none}
+.sc-header{display:flex;align-items:center;gap:24px;justify-content:flex-start}
+.sc-logo-img{width:80px;height:80px;mix-blend-mode:screen;object-fit:contain}
+.sc-logo-fb{display:none;width:72px;height:72px;border:1.5px solid #c9a96e;border-radius:50%;font-family:'Cormorant Garamond',serif;font-style:italic;color:#c9a96e;font-size:30px;align-items:center;justify-content:center}
+.sc-brand{font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.32em;color:#c9a96e;text-transform:uppercase;font-weight:500}
+.sc-body{text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
+.sc-tag{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:24px;letter-spacing:.5em;color:#c9a96ed8;margin-bottom:48px}
+.sc-zh{font-family:'Noto Serif TC',serif;font-size:118px;color:#f5f0e8;letter-spacing:.18em;font-weight:300;margin-bottom:30px;line-height:1.1}
+.sc-en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:42px;color:#c9a96e;letter-spacing:.22em;margin-bottom:32px}
+.sc-compo{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:.32em;color:#c9a96eb0;margin-bottom:54px;font-weight:500}
+.sc-line{width:140px;height:1px;background:#c9a96e;margin:0 auto 50px;opacity:.8}
+.sc-quote-mark{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:60px;color:#c9a96e;line-height:1;margin-bottom:12px}
+.sc-quote{font-family:'Noto Serif TC',serif;font-size:36px;line-height:1.65;color:#f5f0e8;max-width:850px;margin:0 auto;font-weight:300;letter-spacing:.03em}
+.sc-footer{text-align:center;margin-top:auto}
+.sc-cta{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:30px;color:#e6dfd0;letter-spacing:.18em;margin-bottom:18px}
+.sc-url{font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.32em;color:#c9a96e;text-transform:lowercase;font-weight:500}
+
+/* pyramid · 金三角四層 */
+.pyramid-wrap{margin:40px 0 32px;text-align:center}
+.pyramid{max-width:480px;width:100%;height:auto;display:block;margin:0 auto}
+.pyramid polygon{animation:tierIn .9s ease forwards;opacity:0;transform-origin:center}
+.pyramid polygon:nth-of-type(1){animation-delay:.2s}
+.pyramid polygon:nth-of-type(2){animation-delay:.45s}
+.pyramid polygon:nth-of-type(3){animation-delay:.7s}
+.pyramid polygon:nth-of-type(4){animation-delay:.95s}
+@keyframes tierIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pyramid-caption{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--ink);margin-top:18px;text-transform:uppercase}
+.pyramid-lead{font-family:var(--italic);font-style:italic;font-size:16px;letter-spacing:.05em;color:var(--gold);margin-bottom:8px;text-align:center}
+
+/* brand universe section adjustments */
+.bu-intro{font-family:var(--serif);font-size:18px;line-height:2;color:var(--ink);text-align:center;margin-bottom:8px;font-weight:300;white-space:pre-line}
+.bu-intro .em{color:var(--gold)}
+.bu-headline{font-family:var(--serif);font-size:24px;line-height:1.6;color:var(--warm);text-align:center;margin-bottom:32px;font-weight:300;letter-spacing:.04em}
+.bu-headline .em{color:var(--gold);font-family:var(--italic);font-style:italic}
+
+@media (max-width:520px){
+  .app{padding:32px 20px 64px}
+  .intro-title{font-size:30px}
+  .sig-name-zh{font-size:40px;letter-spacing:.12em}
+  .sig-name-en{font-size:16px}
+  .layer-score{font-size:22px}
+  .q-text{font-size:20px}
+  .seg-body{font-size:16px}
+  .quote-body{font-size:18px}
+  .brand{margin-bottom:40px}
+  .bu-headline{font-size:20px}
+  .bu-intro{font-size:16px}
+  .pyramid{max-width:340px}
+  .btn{font-size:13px;letter-spacing:.15em;padding:18px 28px}
+  .yj-logo-img.lg, .yj-logo.lg{width:84px !important;height:84px !important}
+  .yj-logo.lg{font-size:34px !important}
+  .yj-logo-img.sm, .yj-logo.sm{width:30px !important;height:30px !important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="brand">
+    <span class="brand-id">
+      <img src="yj_logo.png" class="yj-logo-img sm blend-black" alt="YJ" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+      <span class="yj-logo sm" style="display:none">YJ</span>
+      AI PERSONA · SCAN ENGINE
+    </span>
+    <span>v1.0</span>
+  </div>
+
+  <!-- FRIEND INTRO (when URL has ?p=XXX) -->
+  <section id="screen-friend" class="screen">
+    <div class="hero-logo">
+      <img src="yj_logo.png" class="yj-logo-img lg blend-black" alt="YJ" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+      <span class="yj-logo lg" style="display:none">YJ</span>
+    </div>
+    <div class="friend-tag">YOUR FRIEND'S PERSONA</div>
+    <p class="friend-lead">你的朋友剛剛測完<br><span class="friend-lead-em">Persona Mini Scan · AI 個人定位探索</span></p>
+    <p class="friend-belong">屬於 ——</p>
+    <h2 class="friend-name" id="friend-name">—</h2>
+    <div class="friend-en" id="friend-en">—</div>
+
+    <div class="friend-block">
+      <div class="friend-block-tag">— 簡介 —</div>
+      <p class="friend-block-body" id="friend-tagline">—</p>
+    </div>
+
+    <div class="friend-block">
+      <div class="friend-block-tag">— 適合建立的品牌角色宇宙 —</div>
+      <p class="friend-universe-type" id="friend-universe-type">—</p>
+      <p class="friend-block-body" id="friend-universe-desc">—</p>
+    </div>
+
+    <div class="friend-divider"></div>
+
+    <p class="friend-cta-text">也來測測——<br>適合你的品牌角色宇宙吧。</p>
+    <button class="btn" onclick="startFromFriend()">開始我的掃描</button>
+  </section>
+
+  <!-- INTRO -->
+  <section id="screen-intro" class="screen active">
+    <div class="hero-logo">
+      <img src="yj_logo.png" class="yj-logo-img lg blend-black" alt="YJ" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+      <span class="yj-logo lg" style="display:none">YJ</span>
+    </div>
+    <div class="intro-tag">PERSONA OS · MINI SCAN</div>
+    <h1 class="intro-title">AI 正在掃描你的<br><em>Persona Potential</em></h1>
+    <p class="intro-sub">10 個信號 · 4 個維度 · 1 個顯影</p>
+    <div class="intro-meta">
+      <span>5–7 分鐘</span>
+      <span>零數據追蹤</span>
+      <span>無 API 呼叫</span>
+      <span>純規則式</span>
+    </div>
+    <button class="btn" onclick="startScan()">啟動掃描</button>
+  </section>
+
+  <!-- QUESTION -->
+  <section id="screen-question" class="screen">
+    <div class="q-meta">
+      <span>Q <span id="q-num">1</span> / 10</span>
+      <span class="q-progress" id="q-progress"></span>
+      <span class="q-layer" id="q-layer">Soul Core</span>
+    </div>
+    <h2 class="q-text" id="q-text">—</h2>
+    <div class="q-options" id="q-options"></div>
+  </section>
+
+  <!-- SCANNING -->
+  <section id="screen-scan" class="screen">
+    <div class="scan-wrap">
+      <pre class="scan-log" id="scan-log"></pre>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="screen-result" class="screen">
+
+    <!-- 1. Signature -->
+    <div class="r-section sig">
+      <div class="sig-rom">— PERSONA SIGNATURE —</div>
+      <h2 class="sig-name-zh" id="sig-zh">—</h2>
+      <div class="sig-name-en" id="sig-en">—</div>
+      <div class="sig-compo" id="sig-compo">—</div>
+      <div class="sig-line"></div>
+      <p class="sig-tag" id="sig-tag">—</p>
+    </div>
+
+    <!-- 2. Layers Detail -->
+    <div class="r-section">
+      <div class="r-tag">02 · Persona Layers</div>
+      <div class="layers-detail" id="layers-detail"></div>
+    </div>
+
+    <!-- 3. Radar -->
+    <div class="r-section">
+      <div class="r-tag">03 · Persona Radar</div>
+      <div class="radar-wrap">
+        <svg id="radar" width="320" height="320" viewBox="0 0 320 320"></svg>
+        <div class="radar-note">這不是評分 · 是你四個維度的目前比例</div>
+      </div>
+    </div>
+
+    <!-- 4. AI 看見你的話 -->
+    <div class="r-section">
+      <div class="r-tag">04 · AI 看見你的話</div>
+      <div class="segs" id="segs"></div>
+    </div>
+
+    <!-- 5. 靈魂金句 -->
+    <div class="r-section">
+      <div class="r-tag">05 · Soul Quote</div>
+      <div class="quote">
+        <div class="quote-mark">❝</div>
+        <div class="quote-body" id="quote-body">—</div>
+      </div>
+    </div>
+
+    <!-- 6. AI 還看見了什麼 + Shadow Bridge -->
+    <div class="r-section">
+      <div class="r-tag">06 · AI 還看見了什麼</div>
+      <p class="shadow-intro" id="shadow-intro">—</p>
+      <div class="bridge" id="bridge"></div>
+    </div>
+
+    <!-- 7. 你的品牌角色宇宙 -->
+    <div class="r-section">
+      <div class="r-tag">07 · 你的品牌角色宇宙</div>
+
+      <p class="bu-intro">這是你的 <span class="em">Persona Mini Scan</span> 顯影。
+只是冰山一角。</p>
+
+      <p class="bu-headline">你的人格，在社群上會長成什麼樣？<br>
+那是你的 <span class="em">品牌角色宇宙</span>。</p>
+
+      <!-- 金三角四層 -->
+      <div class="pyramid-wrap">
+        <div class="pyramid-lead">— Persona OS · 4 Layers —</div>
+        <svg viewBox="0 0 480 340" class="pyramid" aria-label="Persona OS 金三角四層">
+          <defs>
+            <filter id="topGlow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <!-- Tier 4: SOCIAL (top, brightest, glow) -->
+          <polygon points="190,30 290,30 305,88 175,88" fill="rgba(201,169,110,0.6)" stroke="#c9a96e" stroke-width="1.4" filter="url(#topGlow)"/>
+          <text x="240" y="58" text-anchor="middle" fill="#f5f0e8" font-family="JetBrains Mono,monospace" font-size="15" letter-spacing="3" font-weight="500">SOCIAL</text>
+          <text x="240" y="76" text-anchor="middle" fill="#f5f0e8" font-family="Noto Serif TC,serif" font-size="14" font-weight="400">你在群體中的磁場</text>
+          <!-- Tier 3: AESTHETIC -->
+          <polygon points="175,88 305,88 325,156 155,156" fill="rgba(201,169,110,0.4)" stroke="#c9a96e" stroke-width="1.2"/>
+          <text x="240" y="120" text-anchor="middle" fill="#f5f0e8" font-family="JetBrains Mono,monospace" font-size="15" letter-spacing="3" font-weight="500">AESTHETIC</text>
+          <text x="240" y="138" text-anchor="middle" fill="#f5f0e8" font-family="Noto Serif TC,serif" font-size="14" font-weight="400">你的視覺世界觀</text>
+          <!-- Tier 2: VOICE -->
+          <polygon points="155,156 325,156 350,230 130,230" fill="rgba(201,169,110,0.26)" stroke="#c9a96e" stroke-width="1.2"/>
+          <text x="240" y="190" text-anchor="middle" fill="#f5f0e8" font-family="JetBrains Mono,monospace" font-size="15" letter-spacing="3" font-weight="500">VOICE</text>
+          <text x="240" y="208" text-anchor="middle" fill="#f5f0e8" font-family="Noto Serif TC,serif" font-size="14" font-weight="400">你的語言指紋</text>
+          <!-- Tier 1: SOUL (bottom, foundation) -->
+          <polygon points="130,230 350,230 390,314 90,314" fill="rgba(201,169,110,0.15)" stroke="#c9a96e" stroke-width="1.2"/>
+          <text x="240" y="270" text-anchor="middle" fill="#f5f0e8" font-family="JetBrains Mono,monospace" font-size="15" letter-spacing="3" font-weight="500">SOUL</text>
+          <text x="240" y="288" text-anchor="middle" fill="#f5f0e8" font-family="Noto Serif TC,serif" font-size="14" font-weight="400">你的內核驅動引擎</text>
+        </svg>
+        <div class="pyramid-caption">基底是 Soul · 峰頂是 Social · 中間是 Voice 與 Aesthetic</div>
+      </div>
+
+      <!-- Brand Universe CTA bridge -->
+      <div class="bridge">
+        <div class="bridge-head">BRAND UNIVERSE · 完整 4 層</div>
+        <div class="bridge-title">Volume I-IV｜完整 Persona OS 會帶你建構：</div>
+        <ul class="bridge-list">
+          <li><strong style="color:#f5f0e8">Soul</strong> · 你的內核驅動引擎（12 原型 + XYZ 三軸）</li>
+          <li><strong style="color:#f5f0e8">Voice</strong> · 你的語言指紋（5 詞 + 3 句型 + 溫度光譜）</li>
+          <li><strong style="color:#f5f0e8">Aesthetic</strong> · 你的視覺世界觀（12 風格 + 60/30/10 色票）</li>
+          <li><strong style="color:#f5f0e8">Social</strong> · 你在社群上的存在方式（5 型態 + 13 感知 + 人格保護）</li>
+        </ul>
+        <a class="btn" href="#" onclick="return false">進入完整 4 層 · 建構你的品牌角色宇宙</a>
+      </div>
+    </div>
+
+    <!-- 8 · 分享（手機原生分享 sheet · 桌機 fallback 複製連結） -->
+    <div class="r-section">
+      <div class="r-tag">08 · 分享</div>
+      <div class="share-wrap">
+        <p class="share-lead">把你的顯影分享出去，<br>讓朋友也來看看自己是誰。</p>
+        <button class="btn" onclick="copyShareText()">分享到社群</button>
+        <p class="share-note">手機自動跳出分享選項 · IG / FB / LINE / Threads<br>朋友點開連結 → 先看到你的 Persona · 再被邀請做自己的</p>
+      </div>
+    </div>
+
+    <!-- 9. Final Closing -->
+    <div class="r-section closing">
+      <div class="closing-rule"></div>
+      <div class="closing-foot">掃描結束 · 下一層 · 由你決定</div>
+    </div>
+
+    <div style="text-align:center;margin-top:48px">
+      <button class="btn btn-ghost" onclick="restart()">重新掃描</button>
+    </div>
+
+    <!-- Powered by YJ · 品牌署名 -->
+    <div class="powered-by">
+      <img src="yj_logo.png" class="yj-logo-img sm blend-black" alt="YJ" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+      <span class="yj-logo sm" style="display:none">YJ</span>
+      <span class="powered-text">Powered by YJ</span>
+    </div>
+
+    <!-- Footer (Persona Protection notice — per V1.1 spec) -->
+    <div class="footer">
+      我們不會替你模仿創傷／崩潰／關係勒索／PUA 句型。<br>
+      完整人格保護協議 · 5 條鐵則收錄於 <a href="#" onclick="return false">隱私頁</a>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- ─── Hidden share card · captured by html2canvas (1080×1350) ─── -->
+<div id="share-card-wrap">
+  <div id="share-card">
+    <div class="sc-header">
+      <img class="sc-logo-img" src="yj_logo.png" alt="YJ" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+      <div class="sc-logo-fb">YJ</div>
+      <div class="sc-brand">AI Persona · Scan</div>
+    </div>
+    <div class="sc-body">
+      <div class="sc-tag">— PERSONA SIGNATURE —</div>
+      <h2 class="sc-zh" id="sc-zh">—</h2>
+      <div class="sc-en" id="sc-en">—</div>
+      <div class="sc-compo" id="sc-compo">—</div>
+      <div class="sc-line"></div>
+      <div class="sc-quote-mark">❝</div>
+      <div class="sc-quote" id="sc-quote">—</div>
+    </div>
+    <div class="sc-footer">
+      <div class="sc-cta">你會是什麼？</div>
+      <div class="sc-url" id="sc-url">ai-persona-scan</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════
+   AI Persona Mini Scan · V1.1 Prototype
+   單檔 HTML SPA · 純規則式 · 零依賴
+═══════════════════════════════════════════════════ */
+
+/* ─── 1. QUESTIONS ─── */
+const QUESTIONS = [
+  {
+    id:'q1', layer:'SOUL CORE', layerKey:'soul', sublabel:'主原型',
+    text:'此刻，如果有一個畫面會召喚你停下來——它最接近哪一個？',
+    options:[
+      {l:'A',t:'一面空白牆，等著你決定要在上面留下什麼',v:{soul:3,aesthetic:1},tag:'創造者 Creator'},
+      {l:'B',t:'一張寫滿名字的桌子，每個名字背後有一個故事等你連起來',v:{soul:3,social:1},tag:'整合者 Integrator'},
+      {l:'C',t:'一張攤開的地圖，上面有看似無關的點，等你找出規律',v:{soul:3,voice:1},tag:'分析者 Analyst'},
+      {l:'D',t:'一群人圍著火，你聽得到他們沒說出口的事',v:{soul:3,voice:1},tag:'感知者 Empath'},
+      {l:'E',t:'一個麥克風，台下一群人正在等你開口',v:{soul:3,voice:2},tag:'表達者 Expressor'}
+    ]
+  },
+  {
+    id:'q2', layer:'SOUL CORE', layerKey:'soul', sublabel:'任務模組',
+    text:'在團隊裡，你最自然會接走的角色是——',
+    options:[
+      {l:'A',t:'提出概念與原型，把抽象變成可看見的東西',v:{soul:3,aesthetic:1},tag:'創意模組'},
+      {l:'B',t:'拆解問題、設計流程、規劃推進順序',v:{soul:4},tag:'策略模組'},
+      {l:'C',t:'把使用者的感受放在每個決策的中心',v:{soul:3,aesthetic:1,social:1},tag:'體驗模組'},
+      {l:'D',t:'讓運轉本身變得更聰明、更不費力',v:{soul:4},tag:'智能營運模組'},
+      {l:'E',t:'把訊息翻譯成讓更多人能接收的版本',v:{soul:3,social:1,voice:1},tag:'傳播模組'}
+    ]
+  },
+  {
+    id:'q3', layer:'SOUL CORE', layerKey:'soul', sublabel:'AI 協作',
+    text:'如果 AI 是你的後勤戰隊，你最希望它替你扛走——',
+    options:[
+      {l:'A',t:'整理資料、找出規律、輸出洞察',v:{soul:3},tag:'資料分析助手'},
+      {l:'B',t:'給我新的角度、新的句子、新的可能',v:{soul:2,aesthetic:1},tag:'靈感生成夥伴'},
+      {l:'C',t:'把重複的事接走，讓我只做關鍵決策',v:{soul:2,social:1},tag:'流程自動化支援'}
+    ]
+  },
+  {
+    id:'q4', layer:'VOICE DNA', layerKey:'voice', sublabel:'整體感',
+    text:'你說話時，最像下面哪一種「聲音的形狀」？',
+    options:[
+      {l:'A',t:'短句、跳接、像射出去的箭——重點先到，理由後補',v:{voice:3,soul:1},tag:'銳利・直透・清醒'},
+      {l:'B',t:'一句拉得很長，像把一條線慢慢繞出整個圖案',v:{voice:3,social:1},tag:'編織・含蓄・有重量'},
+      {l:'C',t:'先丟一個畫面，再讓對方自己走進去',v:{voice:3,aesthetic:2},tag:'詩意・畫面・留白'},
+      {l:'D',t:'不太說，但開口時，會讓現場安靜下來',v:{voice:3,soul:1},tag:'沉場・觀察・密度'}
+    ]
+  },
+  {
+    id:'q5', layer:'VOICE DNA', layerKey:'voice', sublabel:'溫度基準',
+    text:'當對方需要被安慰時，你最自然的開口方式是——',
+    options:[
+      {l:'A',t:'「我先聽你說，不用急。」聽 → 接 → 不評論',v:{voice:2,social:1},tag:'38°（60% 親近 + 40% 專業）'},
+      {l:'B',t:'「這個處境，先拆成你能處理的那一塊。」',v:{voice:2},tag:'37°（平衡 50/50）'},
+      {l:'C',t:'「先不要動。看看眼前的，是不是你以為的那個。」',v:{voice:2,soul:1},tag:'36°（30% 親近 + 70% 專業）'},
+      {l:'D',t:'不說話，只是在那裡，讓對方自己整理',v:{voice:2,aesthetic:1},tag:'35°（留白主導）'}
+    ]
+  },
+  {
+    id:'q6', layer:'AESTHETIC FREQUENCY', layerKey:'aesthetic', sublabel:'主風格類別',
+    text:'滑手機時，會讓你「不自覺停下來」的畫面是——',
+    options:[
+      {l:'A',t:'一張自然光下的療癒場景：植物、燕麥、晨光、亞麻織品',v:{aesthetic:3},tag:'清新療癒系'},
+      {l:'B',t:'一張低飽和的雜誌風構圖：駝色、絲質、留白多',v:{aesthetic:3,voice:1},tag:'優雅高級系'},
+      {l:'C',t:'一張極簡到只剩一個物件 + 一道光的構圖',v:{aesthetic:3,voice:1},tag:'精緻純粹系'},
+      {l:'D',t:'一張暗色底、有顆粒感、像某個記憶剖面的畫面',v:{aesthetic:3,soul:1},tag:'特色記憶系'}
+    ]
+  },
+  {
+    id:'q7', layer:'AESTHETIC FREQUENCY', layerKey:'aesthetic', sublabel:'副風格・空間密度',
+    text:'你最舒服的工作 / 生活空間，比較接近——',
+    options:[
+      {l:'A',t:'東西很少，每個角落都留白，像一張被打掃過的紙',v:{aesthetic:2},tag:'極簡 / Japandi · 留白主導'},
+      {l:'B',t:'東西不多，但每樣都有質感，像被精心策展的小空間',v:{aesthetic:2,social:1},tag:'安靜奢華 · 中度密度'},
+      {l:'C',t:'東西很多，但都是你選的——光、香、聲音都被調過',v:{aesthetic:2,soul:1},tag:'儀式沉浸 · 高密度'},
+      {l:'D',t:'一桌子打開的物件，正在進行的事比已完成的多',v:{aesthetic:2,voice:1},tag:'流動生產 · 動態密度'}
+    ]
+  },
+  {
+    id:'q8', layer:'SOCIAL SIGNAL', layerKey:'social', sublabel:'主型態',
+    text:'別人說起你，最常用的句型是——',
+    options:[
+      {l:'A',t:'「跟她聊完，我會記下她說的話。」',v:{social:3,voice:1},tag:'📚 老師型'},
+      {l:'B',t:'「她懂我在說什麼，不用解釋太多。」',v:{social:3},tag:'💗 陪伴型'},
+      {l:'C',t:'「她說的方向，我會想跟著走。」',v:{social:3,soul:1},tag:'🚀 領袖型'},
+      {l:'D',t:'「她有自己的世界，光看就會被吸進去。」',v:{social:3,aesthetic:2},tag:'🎨 創作者型'},
+      {l:'E',t:'「她看事情的角度跟別人不一樣。」',v:{social:3,soul:1},tag:'🧠 洞察者型'}
+    ]
+  },
+  {
+    id:'q9', layer:'SOCIAL SIGNAL', layerKey:'social', sublabel:'能量模式',
+    text:'如果「你出現在社群上」是一種頻率，它最像——',
+    options:[
+      {l:'A',t:'高頻穩定波——常常出現，每次都被看見',v:{social:2},tag:'🌊 高頻互動型'},
+      {l:'B',t:'低頻深震——很久不出現，一出現就會被討論',v:{social:2,soul:1},tag:'🌙 深度沉浸型'},
+      {l:'C',t:'觀察脈衝——平常沉默，但會突然丟出讓全場停下來的角度',v:{social:2,soul:1},tag:'👁 觀察輸出型'},
+      {l:'D',t:'儀式型作品——每篇都像精心策展，慢而精緻',v:{social:2,aesthetic:1},tag:'🎭 儀式作品型'},
+      {l:'E',t:'陪伴紀錄——隨手記日常，真實感是核心',v:{social:2},tag:'🌿 陪伴紀錄型'}
+    ]
+  },
+  {
+    id:'q10', layer:'SOCIAL SIGNAL', layerKey:'social', sublabel:'感知核心',
+    text:'你最希望讀者看見你的內容時，第一個感覺是——',
+    options:[
+      {l:'A',t:'「跟著她不會錯。」（穩定 / 可靠）',v:{social:2,voice:1},tag:'🛡 安全感 × 🎓 專業感'},
+      {l:'B',t:'「她讓我看見從來沒想過的角度。」',v:{social:2,soul:1},tag:'✨ 靈感感 × 🔥 顛覆感'},
+      {l:'C',t:'「她跟我一樣會痛、但她走過了。」',v:{social:2},tag:'🌱 真實感 × 🤗 陪伴感'},
+      {l:'D',t:'「她講別人不敢講的。」',v:{social:2,voice:1},tag:'🪞 真話感 × ⚡ 犀利感'},
+      {l:'E',t:'「跟她對話我會清醒。」',v:{social:2,soul:1},tag:'🌅 清醒感 × 🌀 反差感'}
+    ]
+  }
+];
+
+/* ─── 2. SIGNATURES (12 combos) ─── */
+const SIGS = {
+  'soul-voice':{
+    zh:'思語透者', en:'The Insight Channeler',
+    compo:'SOUL × VOICE · DOMINANT PAIR',
+    tag:'你不是會說話的人，你是「先看見才開口」的人。',
+    seg1:[
+      `你不是一個「會說話的人」，
+你是一個「先看見了什麼，才開口」的人。
+
+別人聽見你的句子，
+但真正讓他們停下來的，是句子背後那個更安靜的核心。
+你不需要說多，因為你已經看完一整圈，再選最短的距離說出來。`,
+      `你的存在方式，不是「跟世界對話」，
+是「先把世界放在桌上看清楚，再決定要對誰說、要說什麼」。
+
+別人習慣邊想邊講，
+你習慣先讓畫面在心裡跑完，再開口。
+這不是慢——是密度。`
+    ],
+    seg2:[
+      `你的語言不是工具，是你內在的延伸——
+你說的每一句話，都帶著思考完一整圈之後的密度。
+
+這是為什麼你不擅長閒聊，
+卻能讓一場對話在三句之內轉向。
+當你開口，桌上的人會自動降一度——因為他們知道，你說的是已經被你自己問過很多遍的東西。`,
+      `你說話的節奏，是「先沉默，再切」。
+
+不是因為冷，是因為你不願意把還沒成形的東西丟出去。
+別人講十句話換一個有重量的轉折，
+你講三句話，第三句就會讓對方坐直一點。`
+    ],
+    seg3:{
+      aesthetic:`而你正在卡住的地方，
+不是想得不夠多，是還沒讓「畫面」追上你的思考。
+
+你眼睛裡的世界，還沒被翻譯成別人能直接看見的形狀。
+你的句子很準，但別人接到的還只是「概念」，不是「畫面」。
+下一層要打開的，是把內在的清晰，變成可以被看見的場景。`,
+      social:`而你正在卡住的地方，
+不是說得不夠多，是說的話還沒找到對的傳播軌道。
+
+你的密度需要被對的接收者接住，
+但你還沒分清楚——誰會在你說話時自動降一度，誰會跳過你的句子去找下一個聲音。
+下一層要打開的，是讓你的存在找到能放大它的場域。`
+    },
+    quotes:['你不是來這裡找答案的，你是來這裡記得——你自己就是答案。','你說的每一句話，都帶著思考完一整圈之後的密度。','你的清晰是稀缺品，不是常識。']
+  },
+  'soul-aesthetic':{
+    zh:'境構造影者', en:'The World Crafter',
+    compo:'SOUL × AESTHETIC · DOMINANT PAIR',
+    tag:'你不是「適應這個世界」的人，你是建立一個屬於自己版本的人。',
+    seg1:[
+      `你不是來「找一個位置融入」的人，
+你是來「在還沒人指認過的角落，建立一個小型宇宙」的人。
+
+別人忙著對齊潮流，
+你忙著對齊心裡那個只有你看得見的座標系。
+你的存在感不來自被認可，來自——你知道你正在建造一個世界。`,
+      `你的內核不是回應這個世界，是再造一個版本。
+
+別人會問「現在流行什麼」，
+你會問「我心裡那個畫面，要怎麼才能讓它真的長出來」。
+這不是任性，是一種更慢、更深、更難被複製的創造邏輯。`
+    ],
+    seg2:[
+      `你不太用文字說話，
+你用「畫面 + 留白」說話。
+
+別人寫一篇兩千字才能講完的事，
+你選擇放一張圖、一個物件、一束光——讓人自己走進來。
+這是為什麼你的呈現比解釋更有重量：你已經把訊息藏在場景裡了。`,
+      `你的表達是「氛圍先到，文字後補」。
+
+你不會用大標題、不會用驚嘆號、不會用流行語——
+你會選一個顏色、一個質地、一個角度。
+然後對方在那個畫面前停下來的那一秒，就讀懂了你想說的所有事。`
+    ],
+    seg3:{
+      voice:`而你正在卡住的地方，
+不是建構得不夠完整，是還沒找到自己的語言通道。
+
+你心裡的世界已經很清晰，
+但每次要把它翻譯成「對方能直接接收的句子」時，會卡住。
+下一層要打開的，是讓你的世界，有一條能走出去的語言路徑。`,
+      social:`而你正在卡住的地方，
+不是世界觀不夠強，是你建構的這個世界，還沒被對的人看見。
+
+你已經造出來了——
+但「誰會走進來、誰會停留、誰會留下標記」這件事，你還沒打開。
+下一層要打開的，是讓你的世界，有自己的觀眾入口。`
+    },
+    quotes:['你不是來適應這個世界的，你是來建立一個屬於你的版本。','你選擇放什麼東西在桌上，本身就是一種哲學。','你不需要解釋你的世界，因為它本身就在說話。']
+  },
+  'soul-social':{
+    zh:'召喚前行者', en:'The Calling Forerunner',
+    compo:'SOUL × SOCIAL · DOMINANT PAIR',
+    tag:'你不是分享的人，你是召喚的人。',
+    seg1:[
+      `你不是一個「分享」的人，
+你是一個「召喚」的人。
+
+別人說「你看，這件事很有趣」——他們在分享。
+你說「跟我走，我相信前面有路」——你在召喚。
+這之間的差別，是你看得比現在遠三步。`,
+      `你的存在方式，是站在一個別人還沒到的地方，
+回頭說：「往這邊看，這裡有路。」
+
+不是搖旗吶喊，
+不是強迫跟隨，
+只是因為你眼睛裡有一個畫面太清楚，所以你不能假裝沒看見。`
+    ],
+    seg2:[
+      `你說話的方式，是「方向感大於辭藻」。
+
+別人記得你的句子，不是因為它華麗，是因為它指了一個方向。
+你的存在會在群體裡製造一個「向前傾斜」的場——
+那些跟你站在同一條軌道上的人，會自動往前移動半步。`,
+      `你不是聲音大的人，你是方向清的人。
+
+當你出現在一個討論裡，
+所有的句子會自動排列——因為大家在等你說那一句「所以下一步是」。
+這不是領導感，是一種更深的——「跟著她不會錯」的氣味。`
+    ],
+    seg3:{
+      voice:`而你正在卡住的地方，
+不是看得不夠遠，是「召喚」還沒找到對的措辭。
+
+你的方向感是對的，
+但翻譯成具體的句子時，會有落差——
+有時聽起來太大、太抽象、太前面，跟聽眾的距離會拉開。
+下一層要打開的，是讓你的召喚，有更精準的語言載體。`,
+      aesthetic:`而你正在卡住的地方，
+不是方向不夠清楚，是還沒讓「畫面」承接你的召喚。
+
+你說「往這邊走」，
+但你還沒給人看「那邊長什麼樣」。
+下一層要打開的，是讓你的願景，變成可以被看見的場景。`
+    },
+    quotes:['你不是分享的人，你是召喚的人。','跟著你的人，不是被你說服，是因為你站得遠。','你眼睛裡有一個畫面太清楚，所以你不能假裝沒看見。']
+  },
+  'voice-soul':{
+    zh:'鋒思切境者', en:'The Sharp Cutter',
+    compo:'VOICE × SOUL · DOMINANT PAIR',
+    tag:'你的句子不是說，是切。',
+    seg1:[
+      `你的句子不是「說」，是「切」。
+
+別人用十句話描述一個處境，
+你用一句話，就把那個處境的核心剖開。
+這不是天賦，是你內在那把刀已經磨了很久——你只是還沒意識到，自己手上有一把別人沒有的工具。`,
+      `你說話的方式，會讓現場安靜半秒。
+
+不是因為大聲，是因為精準。
+你不重複別人的話、不繞圈、不討好——
+你會直接走到問題的中心，然後說出大家都心裡有、嘴上沒有的那個句子。`
+    ],
+    seg2:[
+      `你的鋒利不是表面的，
+是你內在已經想得很深之後，才浮上來的那一層。
+
+你不是反應快——你是思考完了，再用最短的距離丟出來。
+這是為什麼你的話帶刺，但不傷人：因為刀指向的是事情，不是人。`,
+      `你說話前，會在心裡先過三遍。
+
+第一遍——抓住這件事的核心。
+第二遍——找到能擊中核心的句型。
+第三遍——確認這個句子不會傷到不該傷的人。
+過完這三遍，才開口。所以你的句子永遠又準又輕。`
+    ],
+    seg3:{
+      aesthetic:`而你正在卡住的地方，
+不是說得不夠準，是你的鋒利還沒被「畫面」承接。
+
+你的話像一道光劈下去，
+但你還沒在劈下去之後，給人看見光照亮的那個場景。
+下一層要打開的，是讓你的句子，後面跟著一個可以被看見的世界。`,
+      social:`而你正在卡住的地方，
+不是說得不夠犀利，是還沒找到對的接收場域。
+
+你的鋒利需要被對的人接住——
+在錯的場合，你的精準會被誤讀為冒犯。
+下一層要打開的，是讓你的句子，找到能放大它、而不是稀釋它的軌道。`
+    },
+    quotes:['你的句子不是說，是切。','別人用十句話描述，你用一句話剖開。','你話帶刺，但不傷人——因為刀指向的是事情，不是人。']
+  },
+  'voice-aesthetic':{
+    zh:'詩境敘者', en:'The Cinematic Voice',
+    compo:'VOICE × AESTHETIC · DOMINANT PAIR',
+    tag:'你說的不是話，是場景。',
+    seg1:[
+      `你說的不是「話」，是「場景」。
+
+別人寫一段文字，
+你寫的是一個房間——有光線、有溫度、有那個人剛剛離開時還沒散去的氣味。
+讀你的句子，像走進去，不像聽下去。`,
+      `你的存在方式，是用語言搭建空間。
+
+別人講「我今天很累」，
+你會說「今天像一場跑得太久的夢，醒來時房間裡的光都歪了」。
+這不是修辭，是你真實感受世界的方式——你看見的本來就是場景，不是事件。`
+    ],
+    seg2:[
+      `你的句子，是有「視覺溫度」的句子。
+
+別人用形容詞，你用畫面。
+別人用比喻，你用鏡頭。
+你寫一個人在哭，你不會寫「她很傷心」——你會寫「她肩膀沉下去那一秒，桌上的光也跟著矮了」。`,
+      `你說話的節奏像一首詩——
+不是因為你刻意，是因為你內在對「美」有一個很高的標準。
+
+你會自動避開太直白的句子、太擁擠的句子、太燙的句子。
+你選擇的詞，會像挑物件擺桌一樣——什麼放在前面、什麼放在後面、什麼留白，都有秩序。`
+    ],
+    seg3:{
+      soul:`而你正在卡住的地方，
+不是寫得不夠美，是還沒把「畫面背後的核心」想清楚。
+
+你的場景很有感，
+但有時候，畫面很滿，核心很輕——讀者走完一圈之後，記得氛圍，但不知道你到底要說什麼。
+下一層要打開的，是讓你的詩，有它要指向的那個地方。`,
+      social:`而你正在卡住的地方，
+不是寫得不夠詩意，是這些詩還沒找到能接住它們的人。
+
+你的句子有一種「需要被慢讀的密度」，
+但社群的節奏在跑——它需要的是被一秒接住的句子。
+下一層要打開的，是讓你的詩，找到願意停下來的觀眾入口。`
+    },
+    quotes:['你說的不是話，是場景。','你的句子是一個房間，讓人走進去，不是聽下去。','別人用形容詞，你用鏡頭。']
+  },
+  'voice-social':{
+    zh:'金句承載者', en:'The Quote Carrier',
+    compo:'VOICE × SOCIAL · DOMINANT PAIR',
+    tag:'你說過的話會被引用、被記得、被截圖。',
+    seg1:[
+      `你說過的話會被記得。
+
+不是因為你常說，是因為你說的每一句都被你自己選過。
+你不是在跟世界閒聊，你是在留下「值得被引用的句子」。
+這是為什麼別人轉貼你的句子時，會自動加上你的名字——他們知道，這句話只能是你說的。`,
+      `你存在的方式，是「製造會留下來的句子」。
+
+別人說十句，留下零句。
+你說三句，留下兩句。
+這不是稀有，這是一種已經內化的編輯機制——你說出口前，自己會先把不夠重的句子過濾掉。`
+    ],
+    seg2:[
+      `你說話的方式，會在群體裡製造「停頓點」。
+
+當你開口，現場會自動慢半拍。
+不是因為你刻意要被聽見，是因為你的句子有一種「需要被消化」的密度。
+你是少數能讓社群速度自動降一檔的人——你的存在，就是節奏的調節器。`,
+      `你的句子，會自動找到它的傳播路徑。
+
+別人需要寫長文鋪陳，
+你只需要丟一句話——它會自己被截圖、被引用、被刺青在某個人的書頁上。
+這是為什麼你不用「努力被看見」——你的句子本身就是擴散引擎。`
+    ],
+    seg3:{
+      soul:`而你正在卡住的地方，
+不是說得不夠好，是「下一句要說什麼」還沒從內核浮上來。
+
+你的句子是強的，但要不斷產出強句子，需要一個穩定的內核引擎。
+下一層要打開的，是讓你的金句，有一個持續發電的核心。`,
+      aesthetic:`而你正在卡住的地方，
+不是金句不夠多，是這些句子還沒被放進對的視覺載體。
+
+你的句子是有重量的，
+但配上錯的圖、錯的字型、錯的構圖，重量會被稀釋一半。
+下一層要打開的，是讓你的句子，有匹配的視覺呈現。`
+    },
+    quotes:['別人說十句，留下零句。你說三句，留下兩句。','你說過的話會被截圖——因為這句話只能是你說的。','你存在的方式，是製造會留下來的句子。']
+  },
+  'aesthetic-soul':{
+    zh:'儀式構境者', en:'The Ritual Builder',
+    compo:'AESTHETIC × SOUL · DOMINANT PAIR',
+    tag:'你選擇放什麼東西在桌上，本身就是哲學。',
+    seg1:[
+      `你看見的「美」，從來不是裝飾，是某種秩序。
+
+別人看一杯水，看到的是水。
+你看一杯水，看到的是「水、杯、桌面光線」三者之間的距離。
+你對畫面的敏感，其實是對「結構」的敏感——你眼睛在做的事，是別人需要學一輩子才會的編輯工作。`,
+      `你存在的方式，是把日常變成儀式。
+
+別人吃早餐，你佈置早餐。
+別人喝咖啡，你選杯子。
+這不是龜毛——這是你內在對「世界該長什麼樣」有一個極清晰的標準，而你願意花時間讓周圍對齊那個標準。`
+    ],
+    seg2:[
+      `你不用大聲說話，
+因為你選的物件、你佈置的場景、你呈現的方式，已經在替你說。
+
+別人需要解釋自己「我是這樣的人」，
+你不需要——
+你坐下來、放下杯子、調整一下角落的光，所有訊息就已經到位。`,
+      `你說的話常常比畫面少，
+但每一句都對應一個你心裡已經建構好的世界。
+
+別人聽見你的句子，覺得很短。
+真正在發生的是——他們正在進入一個你已經為他們搭好的場域。`
+    ],
+    seg3:{
+      voice:`而你正在卡住的地方，
+不是畫面不夠完整，是還沒讓「文字」追上你的視覺。
+
+你的場景已經到位，
+但需要文字描述、需要寫貼文、需要解釋給沒到場的人時——會卡。
+下一層要打開的，是讓你的世界，有對應強度的語言通道。`,
+      social:`而你正在卡住的地方，
+不是儀式做得不夠精緻，是這些儀式還沒被夠多對的人見證。
+
+你建構了世界，
+但這個世界目前主要由你自己在裡面。
+下一層要打開的，是讓你的場域，自然吸引同頻的人進來。`
+    },
+    quotes:['你選擇放什麼東西在桌上，本身就是哲學。','你對畫面的敏感，其實是對結構的敏感。','你不用大聲說話，因為你選的物件已經在替你說。']
+  },
+  'aesthetic-voice':{
+    zh:'畫面低語者', en:'The Visual Whisperer',
+    compo:'AESTHETIC × VOICE · DOMINANT PAIR',
+    tag:'你的留白裡藏著最大的訊息量。',
+    seg1:[
+      `你說一張圖，比說一千個字更精準。
+
+你眼睛看見的東西，本來就帶著結構、光線、節奏——你不需要解釋，你只需要呈現。
+這是為什麼你的限動、你的桌面、你的牆面，會讓人停下來：因為它們不是「擺好看」，是「在敘事」。`,
+      `你的存在，是「不解釋的清晰」。
+
+別人靠語言建立辨識度，
+你靠視覺建立辨識度——一張圖、一個顏色、一個排版，就能讓人立刻知道「這是你」。
+這是稀缺的——多數人需要解釋自己，你不需要。`
+    ],
+    seg2:[
+      `你說話的方式，是「留白比說出口的還多」。
+
+你不會把話說完，
+你會在最關鍵的地方停下來，讓對方自己接後面那一句。
+這不是含糊，這是一種更高層次的精準——你知道，說太多會稀釋訊息。`,
+      `你的句子永遠是短的，
+因為你不需要長句子。
+
+別人需要鋪陳，
+你不需要——你的視覺已經鋪陳完了，文字只是收束。
+這是為什麼你的文字總是有一種「剛好」的感覺：因為它和畫面一起運作，從來不是孤軍。`
+    ],
+    seg3:{
+      soul:`而你正在卡住的地方，
+不是呈現得不夠好，是「為什麼要呈現這個」這個核心問題還沒對自己說清楚。
+
+你的畫面很美，
+但需要「為一個更大的目的服務」時，會找不到方向。
+下一層要打開的，是讓你的視覺，連回它要服務的內核。`,
+      social:`而你正在卡住的地方，
+不是畫面不夠精緻，是這些畫面還沒找到能放大它們的傳播軌道。
+
+你的視覺是高密度的，
+但社群演算法獎勵的是高頻、不是高密度。
+下一層要打開的，是讓你的呈現，找到不被速度稀釋的場域。`
+    },
+    quotes:['你說一張圖，比說一千個字更精準。','你的留白比說出口的還多。','你不需要解釋自己——你的視覺已經在說了。']
+  },
+  'aesthetic-social':{
+    zh:'場域策展者', en:'The Curator Presence',
+    compo:'AESTHETIC × SOCIAL · DOMINANT PAIR',
+    tag:'你走進的空間，會自動形成一個磁場。',
+    seg1:[
+      `你走進一個空間，那個空間的氣場會立刻調整。
+
+你不用做什麼，
+只是「在」——光線會被你重新分配、視線會被你重新排列、聲音會降一度。
+這不是表演，這是你內在的視覺秩序，會自動對外擴散。`,
+      `你的存在方式，是「自帶場域」。
+
+別人需要場地、需要佈置、需要燈光師——你不需要。
+你坐在哪裡，那裡就是中心。
+不是因為你想搶位置，是因為你眼睛裡有一個很穩定的座標系，會自動把周圍對齊。`
+    ],
+    seg2:[
+      `你不需要說話來吸引人。
+
+你出現、你站定、你動作不大——
+但所有目光會自動往你這邊調整。
+這是少數人才有的能力：「存在本身就是訊號」。`,
+      `你說話時，不需要爭奪發言權。
+
+群體會自動空出位置給你。
+這不是因為你聲音大，是因為你身上有一種「沒說的話比說出口的更值得等」的氣味。
+這是場域策展者最稀缺的天賦。`
+    ],
+    seg3:{
+      soul:`而你正在卡住的地方，
+不是場域不夠美，是「為什麼要建這個場域」還沒對自己說清楚。
+
+你的氣場是強的，
+但需要這個氣場「為一個更大的願景服務」時，會找不到根。
+下一層要打開的，是讓你的場域，有自己的內核燃料。`,
+      voice:`而你正在卡住的地方，
+不是存在感不夠強，是「離開現場之後」，沒有足夠的語言可以延續這個場域。
+
+你的場域只在你在的時候成立——
+但社群上，你不可能一直在場。
+下一層要打開的，是讓你的氣場，有一條能離開現場的語言通道。`
+    },
+    quotes:['你走進的空間，會自動形成一個磁場。','你出現、你站定、你動作不大——但所有目光會自動調整。','你身上有一種「沒說的話比說出口的更值得等」的氣味。']
+  },
+  'social-soul':{
+    zh:'磁場前行者', en:'The Magnetic Vanguard',
+    compo:'SOCIAL × SOUL · DOMINANT PAIR',
+    tag:'你不是聲音大，你是方向清。',
+    seg1:[
+      `你出現在一個群體裡，那個群體會自動「指向你」。
+
+不是因為你站在中央，
+是因為你身上有一種「她知道往哪走」的氣味。
+別人看見你，第一反應不是「她在說什麼」，是「她接下來要做什麼」。`,
+      `你存在的方式，是「人群中的指南針」。
+
+你不一定發聲，
+但只要你在場，所有討論的軸會自動對齊到一個方向。
+這是少見的——多數人在群體裡會被影響，你在群體裡會影響群體。`
+    ],
+    seg2:[
+      `你不是聲音大的人，你是方向清的人。
+
+別人跟著你，不是被你說服，是因為你站得遠——
+你看見的圖像比現在大三圈，所以你說「往這邊」的時候，會被自動信任。
+這不是領導力，是更深的「她不會錯」的氣場。`,
+      `你的影響力，來自你不需要解釋自己。
+
+你不寫長文、不打標籤、不證明——
+你只是繼續走在你看見的方向上，然後人會自動跟上來。
+這是為什麼你不焦慮流量、不焦慮觸及率：你的存在邏輯，本來就不靠數據驗證。`
+    ],
+    seg3:{
+      voice:`而你正在卡住的地方，
+不是方向不夠清，是說出口的句子還沒追上方向感。
+
+你心裡很清楚，
+但翻譯成可以被傳遞、被引用、被記住的句子時，會卡。
+下一層要打開的，是讓你的方向，有對應的語言載體。`,
+      aesthetic:`而你正在卡住的地方，
+不是磁場不夠強，是還沒讓「畫面」承接你的方向。
+
+你說「往這邊走」，
+但你還沒給人看見「那邊長什麼樣」。
+下一層要打開的，是讓你的願景，有可以被看見的場景。`
+    },
+    quotes:['你不是聲音大，你是方向清。','別人跟著你，不是被你說服，是因為你站得遠。','你的影響力，來自你不需要解釋自己。']
+  },
+  'social-voice':{
+    zh:'主場敘者', en:'The Stage Speaker',
+    compo:'SOCIAL × VOICE · DOMINANT PAIR',
+    tag:'你不是被推上台的人，你是讓台被建立起來的人。',
+    seg1:[
+      `你不是被推上台的人，
+你是讓「台」被建立起來的人。
+
+別人需要場合、需要邀請、需要被介紹——
+你不需要。你走到哪裡，那裡就會自動長出一個舞台。
+不是因為你愛表演，是因為你身上有一種「她在的地方，事情會發生」的氣味。`,
+      `你存在的方式，是「自帶主場」。
+
+不需要主持人、不需要破冰、不需要熱場——
+你開口三句，現場就會對齊到你的節奏。
+這是少數人才有的能力：你的存在，本身就是事件的開關。`
+    ],
+    seg2:[
+      `你說話的方式，是「先穿透雜訊，再給座標」。
+
+別人說話需要鋪陳，你說話直接到位。
+你的句子像光，不是聲——它會先穿過所有人的注意力，再落在該落的地方。
+這是為什麼你開口，現場會自動降一度：因為大家知道，接下來的這句很重要。`,
+      `你不會把話講長，
+但每一句都有「結構」——開、轉、合，清清楚楚。
+
+別人講十句沒重點，你講三句句句是錨。
+你的語言不是流動，是雕刻——你會在最關鍵的地方停一下，讓那個句子有時間沉下去。`
+    ],
+    seg3:{
+      soul:`而你正在卡住的地方，
+不是場域控制力不夠，是「為什麼要站在前面」這個內核還沒對自己說清楚。
+
+你的主場感是強的，
+但要持續、要長期、要不燒乾——需要一個更深的內在燃料。
+下一層要打開的，是讓你的舞台，有自己的根。`,
+      aesthetic:`而你正在卡住的地方，
+不是說話不夠有力，是這些話還沒被放進對的視覺場域。
+
+你的句子在現場很強，
+但離開現場、被截圖、被分享時——失去了背景，重量會減半。
+下一層要打開的，是讓你的語言，有匹配的視覺呈現。`
+    },
+    quotes:['你不是被推上台的人，你是讓台被建立起來的人。','你的句子像光，不是聲。','別人講十句沒重點，你講三句句句是錨。']
+  },
+  'social-aesthetic':{
+    zh:'氣場顯影者', en:'The Aura Frame',
+    compo:'SOCIAL × AESTHETIC · DOMINANT PAIR',
+    tag:'你不需要解釋自己，你的存在就是一種敘事。',
+    seg1:[
+      `你不需要解釋自己。
+
+別人需要寫自介、需要做名片、需要 elevator pitch——
+你不需要。你出現、你站定、你穿著、你說話的節奏——所有訊息已經到位。
+這是少數人才有的能力：「存在本身就是辨識度」。`,
+      `你存在的方式，是「自帶識別」。
+
+不需要 Logo、不需要標語、不需要解釋——
+別人看見你一次，第二次就會記得。
+這不是因為你張揚，是因為你內在對「我是誰」有一個很穩定的座標——這個穩定，會自動向外發光。`
+    ],
+    seg2:[
+      `你出現在哪裡，那裡的美感標準就會被提升。
+
+不是因為你愛挑剔，是因為你眼睛訓練了一輩子。
+你會自動把場景對齊到一個更好的版本——換一個杯子、調一下光、移動一個物件。
+你不批判別人的選擇，你只是讓自己的視覺秩序自然發生。`,
+      `你說話的方式不是用詞——是用「氛圍 + 節奏 + 視覺」。
+
+別人靠形容詞傳遞感覺，
+你靠你選的物件、你站的角度、你打的光來傳遞。
+這是為什麼你發一張照片不需要配文：照片本身就是完整的句子。`
+    ],
+    seg3:{
+      soul:`而你正在卡住的地方，
+不是辨識度不夠強，是「這個辨識度要往哪走」還沒對自己說清楚。
+
+你已經被認出來了，
+但「被認出來之後要做什麼」——這個方向感還沒浮現。
+下一層要打開的，是讓你的氣場，有一個它要前往的地方。`,
+      voice:`而你正在卡住的地方，
+不是被看見得不夠，是「離開視覺之後，沒有足夠的語言可以延續」。
+
+你的氣場在現場很強，
+但需要寫長文、需要解釋深度、需要被引用時——會卡。
+下一層要打開的，是讓你的存在，有對應強度的語言通道。`
+    },
+    quotes:['你不需要解釋自己，你的存在就是一種敘事。','你出現在哪裡，那裡的美感標準就會被提升。','你發一張照片不需要配文——照片本身就是完整的句子。']
+  }
+};
+
+/* ─── 3a. BRAND UNIVERSE TYPES · 12 種品牌角色宇宙定位 ─── */
+const BRAND_UNIVERSE = {
+  'soul-voice':{type:'思辨型深度 IP',desc:'以高密度洞察建立深度信任，吸引想被精準理解的決策者與創業者。'},
+  'soul-aesthetic':{type:'世界觀型美學 IP',desc:'以視覺與留白建立一個獨立宇宙，吸引被氛圍打動、想進入這個世界的人。'},
+  'soul-social':{type:'領航型覺醒 IP',desc:'以方向感建立追隨而非喊口號，吸引正在尋找下一步的同行者。'},
+  'voice-soul':{type:'直透型洞察 IP',desc:'以一句話剖開核心建立辨識度，吸引討厭繞圈子的清醒派。'},
+  'voice-aesthetic':{type:'詩意敘事型 IP',desc:'以文字搭建場景建立沉浸感，吸引慢讀派與美感同類。'},
+  'voice-social':{type:'金句型傳播 IP',desc:'以製造會留下來的句子擴散，吸引被一句話打中、想引用金句的人。'},
+  'aesthetic-soul':{type:'儀式美學型 IP',desc:'以日常即哲學建立生活方式品牌，吸引追求慢與精緻的同頻者。'},
+  'aesthetic-voice':{type:'視覺低語型 IP',desc:'以留白比說出口更多建立精準辨識，吸引懂留白美學、不需被解釋的人。'},
+  'aesthetic-social':{type:'氣場策展型 IP',desc:'以存在即訊號建立磁場，吸引被氣場召喚的同頻者。'},
+  'social-soul':{type:'磁場領航型 IP',desc:'以站得遠看得清建立信任，吸引想跟對人、走對方向的人。'},
+  'social-voice':{type:'舞台敘事型 IP',desc:'以自帶主場建立話語權，吸引被精準語言與重量句子吸引的群體。'},
+  'social-aesthetic':{type:'識別型氣場 IP',desc:'以存在即敘事建立品牌記憶，吸引想被一眼認出的同類。'}
+};
+
+/* ─── 3. SHADOW BRIDGES ─── */
+const BRIDGES = {
+  soul:{
+    intro:'你的 Shadow Layer 在 Soul Core。\n\n不是缺口——是你還沒對自己說清楚那個內核驅動引擎。',
+    title:'Phase I｜靈魂建議書 會帶你進入：',
+    items:['你的 12 種天賦原型完整定位','你的 XYZ 三軸 AI 時代角色','你的能力 × 願景 × 價值觀三圓交集','你內在驅動引擎的詩意命名'],
+    cta:'進入 Phase I'
+  },
+  voice:{
+    intro:'你的 Shadow Layer 在 Voice DNA。\n\n不是缺口——是你的思考還沒找到精準的語言通道。',
+    title:'Phase A｜口吻 DNA 報告 會帶你進入：',
+    items:['你最常用的 5 個詞彙 + 3 個句型 + 2 個比喻','你的情緒溫度光譜（基準 °C + 4 場合溫度）','你的口吻禁區地圖（紅線 + 軟禁區）','一段可以直接複製到 ChatGPT / Claude 的 AI 代言人指令'],
+    cta:'進入 Phase A'
+  },
+  aesthetic:{
+    intro:'你的 Shadow Layer 在 Aesthetic Frequency。\n\n不是缺口——是你眼睛裡已經住著一個世界，但還沒被翻譯成 AI 聽得懂的視覺語言。',
+    title:'Phase B｜美感配方卡 會帶你進入：',
+    items:['你在 12 種風格參考裡的完整定位','你的 60/30/10 個人色票（含 hex 色碼）','你的視覺意象庫 + 視覺禁區地圖','一段可以直接複製到 Midjourney / Sora 的視覺 prompt'],
+    cta:'進入 Phase B'
+  },
+  social:{
+    intro:'你的 Shadow Layer 在 Social Signal。\n\n不是缺口——是你的存在還沒找到對的傳播軌道。',
+    title:'Phase C｜社群人格 DNA 卡 會帶你進入：',
+    items:['你的主型態 × 副型態 × 能量模式完整解析','你的社群氣味 + 同類辨識地圖','你會持續說的 3 個內容支柱','你的人格保護協議（AI 替你守的邊界）'],
+    cta:'進入 Phase C'
+  }
+};
+
+const LAYER_META = {
+  soul:{vol:'I',  name:'SOUL CORE',           icon:'📕'},
+  voice:{vol:'A', name:'VOICE DNA',           icon:'📗'},
+  aesthetic:{vol:'B', name:'AESTHETIC FREQUENCY', icon:'📘'},
+  social:{vol:'C', name:'SOCIAL SIGNAL',      icon:'📙'}
+};
+
+/* ═══════════════════════════════════════════════════
+   STATE & FLOW
+═══════════════════════════════════════════════════ */
+let currentQ = 0;
+let answers = [];
+let lastResult = null;       // {scores, dominant, secondary, shadow, sig}
+let lastDisplay = null;      // {s1, s2, s3, quote}  -- locked variants for share
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ═══════════════════════════════════════════════════
+   URL ENCODING (sharable links · friend hook)
+═══════════════════════════════════════════════════ */
+function encodeAnswers(ans){
+  return ans.map(a=>a.opt.l).join('');
+}
+function decodeAnswers(code){
+  if(!code || code.length !== 10) return null;
+  const decoded = [];
+  for(let i=0;i<10;i++){
+    const q = QUESTIONS[i];
+    const opt = q.options.find(o=>o.l === code[i].toUpperCase());
+    if(!opt) return null;
+    decoded.push({qId:q.id, layerKey:q.layerKey, sublabel:q.sublabel, opt:opt});
+  }
+  return decoded;
+}
+function getShareUrl(code){
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?p=${code}`;
+}
+function getHost(){
+  return (window.location.hostname || 'ai-persona-scan') + (window.location.pathname.replace(/\/$/,'').split('/').pop() === 'index.html' ? '' : window.location.pathname.replace(/\/$/,''));
+}
+
+/* ═══════════════════════════════════════════════════
+   FRIEND INTRO (when URL has ?p=XXX)
+═══════════════════════════════════════════════════ */
+// Remove second-person 「你」 prefix words so friend page doesn't read like it's addressing the visitor
+function dropYou(text){
+  return text
+    .replace(/你不是/g, '不是')
+    .replace(/你不需要/g, '不需要')
+    .replace(/你不/g, '不')
+    .replace(/你是/g, '是')
+    .replace(/你的/g, '')
+    .replace(/你說/g, '說')
+    .replace(/你走/g, '走')
+    .replace(/你選擇/g, '選擇')
+    .replace(/你會/g, '會')
+    .replace(/你/g, '');
+}
+
+function checkFriendUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('p');
+  if(!code) return false;
+  const friendAns = decodeAnswers(code);
+  if(!friendAns) return false;
+  const R = computeFromAnswers(friendAns);
+  const sig = R.sig;
+  const universe = BRAND_UNIVERSE[R.sigKey] || {type:'—', desc:'—'};
+  document.getElementById('friend-name').textContent = sig.zh;
+  document.getElementById('friend-en').textContent = sig.en;
+  document.getElementById('friend-tagline').textContent = dropYou(sig.tag);
+  document.getElementById('friend-universe-type').textContent = universe.type;
+  document.getElementById('friend-universe-desc').textContent = dropYou(universe.desc);
+  show('screen-friend');
+  return true;
+}
+function startFromFriend(){
+  // Clear URL params so user starts fresh
+  history.replaceState({},'',window.location.pathname);
+  startScan();
+}
+
+function startScan(){
+  currentQ = 0;
+  answers = [];
+  show('screen-question');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[currentQ];
+  document.getElementById('q-num').textContent = currentQ+1;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-layer').textContent = q.layer + ' · ' + q.sublabel;
+  document.getElementById('q-progress').style.setProperty('--p', ((currentQ+1)/10*100)+'%');
+  const wrap = document.getElementById('q-options');
+  wrap.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="letter">${opt.l}</span><span class="text">${opt.t}</span>`;
+    btn.onclick = ()=>selectOption(i);
+    wrap.appendChild(btn);
+  });
+}
+
+function selectOption(i){
+  const q = QUESTIONS[currentQ];
+  const opt = q.options[i];
+  answers.push({qId:q.id, layerKey:q.layerKey, sublabel:q.sublabel, opt:opt});
+  currentQ++;
+  if (currentQ < 10){
+    renderQuestion();
+  } else {
+    runScanAnimation();
+  }
+}
+
+/* ─── scanning animation ─── */
+function runScanAnimation(){
+  show('screen-scan');
+  const log = document.getElementById('scan-log');
+  log.innerHTML = '';
+  const lines = [
+    {t:'> AI PERSONA SCAN · v1.0', cls:'head', delay:200},
+    {t:'> 正在讀取你的 10 個 Persona Signal⋯', cls:'', delay:600},
+    {t:'> Layer 01｜Soul Core           ▓▓▓▓▓▓▓▓▓▓ ✓', cls:'done', delay:500},
+    {t:'> Layer 02｜Voice DNA           ▓▓▓▓▓▓▓▓▓▓ ✓', cls:'done', delay:500},
+    {t:'> Layer 03｜Aesthetic Frequency ▓▓▓▓▓▓▓▓▓▓ ✓', cls:'done', delay:500},
+    {t:'> Layer 04｜Social Signal       ▓▓▓▓▓▓▓▓▓▓ ✓', cls:'done', delay:500},
+    {t:'>', cls:'', delay:200},
+    {t:'> 顯影完成。', cls:'head', delay:400},
+    {t:'>', cls:'', delay:100},
+    {t:'> 你的 Persona 簽名正在生成⋯', cls:'', delay:600}
+  ];
+  let i = 0;
+  function tick(){
+    if (i >= lines.length){
+      setTimeout(()=>{
+        computeAndRenderResult();
+        show('screen-result');
+      }, 500);
+      return;
+    }
+    const line = lines[i];
+    const span = document.createElement('div');
+    span.className = line.cls;
+    span.textContent = line.t;
+    log.appendChild(span);
+    i++;
+    setTimeout(tick, line.delay);
+  }
+  tick();
+}
+
+/* ─── compute result (pure function, used by both flow + friend preview) ─── */
+function computeFromAnswers(ans){
+  const scores = {soul:0, voice:0, aesthetic:0, social:0};
+  ans.forEach(a=>{
+    Object.entries(a.opt.v).forEach(([k,val])=>{
+      scores[k] = (scores[k]||0) + val;
+    });
+  });
+  const norm = {};
+  Object.keys(scores).forEach(k=>{
+    norm[k] = Math.min(100, Math.round(scores[k]/14*100));
+  });
+  const sorted = Object.entries(norm).sort((a,b)=>b[1]-a[1]);
+  const dominant = sorted[0][0];
+  const secondary = sorted[1][0];
+  const shadow = sorted[3][0];
+  const sigKey = dominant+'-'+secondary;
+  const sig = SIGS[sigKey];
+  return {norm, dominant, secondary, shadow, sig, sigKey};
+}
+function computeAndRenderResult(){
+  lastResult = computeFromAnswers(answers);
+  // Update browser URL to include share code (so this IS the shareable URL)
+  const code = encodeAnswers(answers);
+  history.pushState({}, '', '?p='+code);
+  renderResult(lastResult);
+}
+
+/* ─── render result ─── */
+function renderResult(R){
+  const {norm, dominant, secondary, shadow, sig} = R;
+
+  // Signature
+  document.getElementById('sig-zh').textContent = sig.zh;
+  document.getElementById('sig-en').textContent = sig.en;
+  document.getElementById('sig-compo').textContent = sig.compo;
+  document.getElementById('sig-tag').textContent = sig.tag;
+
+  // Layers Detail
+  const detail = document.getElementById('layers-detail');
+  detail.innerHTML = '';
+  ['soul','voice','aesthetic','social'].forEach(k=>{
+    const meta = LAYER_META[k];
+    const score = norm[k];
+    const tags = extractLayerTags(k);
+    const row = document.createElement('div');
+    row.className = 'layer-row';
+    row.innerHTML = `
+      <div class="layer-head">
+        <div class="layer-name"><span class="vol">${meta.vol}</span>${meta.name}</div>
+        <div class="layer-score">${score}</div>
+      </div>
+      <div class="layer-bar" style="--w:${score}%"></div>
+      <div class="layer-tags">${tags.map(t=>`<div><span class="k">${t.k}</span><span class="v">${t.v}</span></div>`).join('')}</div>
+    `;
+    detail.appendChild(row);
+  });
+
+  // Radar
+  drawRadar(norm);
+
+  // Segments (AI 看見你的話) -- lock variants for share consistency
+  const segs = document.getElementById('segs');
+  segs.innerHTML = '';
+  const s1 = pick(sig.seg1);
+  const s2 = pick(sig.seg2);
+  const s3 = sig.seg3[shadow] || Object.values(sig.seg3)[0];
+  const chosenQuote = pick(sig.quotes);
+  lastDisplay = {s1, s2, s3, quote: chosenQuote};
+  [
+    {head:'01｜你存在的方式', body:s1},
+    {head:'02｜你說話的方式', body:s2},
+    {head:'03｜你卡住的方式', body:s3}
+  ].forEach(seg=>{
+    const div = document.createElement('div');
+    div.className = 'seg';
+    div.innerHTML = `<div class="seg-head">${seg.head}</div><div class="seg-body">${seg.body}</div>`;
+    segs.appendChild(div);
+  });
+
+  // Quote
+  document.getElementById('quote-body').textContent = chosenQuote;
+
+  // Populate hidden share card
+  document.getElementById('sc-zh').textContent = sig.zh;
+  document.getElementById('sc-en').textContent = sig.en;
+  document.getElementById('sc-compo').textContent = sig.compo;
+  document.getElementById('sc-quote').textContent = chosenQuote;
+  document.getElementById('sc-url').textContent = getHost();
+
+  // Shadow + Bridge
+  const br = BRIDGES[shadow];
+  document.getElementById('shadow-intro').textContent = br.intro;
+  document.getElementById('bridge').innerHTML = `
+    <div class="bridge-head">Shadow → Phase Bridge</div>
+    <div class="bridge-title">${br.title}</div>
+    <ul class="bridge-list">${br.items.map(i=>`<li>${i}</li>`).join('')}</ul>
+    <a class="btn" href="#" onclick="return false">${br.cta}</a>
+  `;
+}
+
+/* ─── extract tags per layer from answers ─── */
+function extractLayerTags(layerKey){
+  // Map: which questions' sublabels feed into which layer
+  const mapping = {
+    soul:[{qIdx:0,k:'主原型'},{qIdx:1,k:'任務模組'},{qIdx:2,k:'AI 協作'}],
+    voice:[{qIdx:3,k:'整體感'},{qIdx:4,k:'溫度基準'}],
+    aesthetic:[{qIdx:5,k:'主風格類別'},{qIdx:6,k:'副風格・密度'}],
+    social:[{qIdx:7,k:'主型態'},{qIdx:8,k:'能量模式'},{qIdx:9,k:'感知核心'}]
+  };
+  return mapping[layerKey].map(m=>({
+    k:m.k,
+    v:answers[m.qIdx] ? answers[m.qIdx].opt.tag : '—'
+  }));
+}
+
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+/* ─── radar SVG ─── */
+function drawRadar(scores){
+  const svg = document.getElementById('radar');
+  const cx=160, cy=160, maxR=120;
+  const layers = ['soul','voice','aesthetic','social'];
+  const labels = ['SOUL','VOICE','AESTHETIC','SOCIAL'];
+  const angles = [-90, 0, 90, 180];
+
+  let html = '';
+  // Grid (concentric rings)
+  [0.25, 0.5, 0.75, 1].forEach(p=>{
+    const pts = angles.map(a=>{
+      const r = maxR * p;
+      const rad = a*Math.PI/180;
+      return [cx + r*Math.cos(rad), cy + r*Math.sin(rad)];
+    }).map(p=>p.join(',')).join(' ');
+    html += `<polygon points="${pts}" fill="none" stroke="#c9a96e1a" stroke-width="0.5"/>`;
+  });
+  // Axes
+  angles.forEach(a=>{
+    const rad = a*Math.PI/180;
+    const x = cx + maxR*Math.cos(rad);
+    const y = cy + maxR*Math.sin(rad);
+    html += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#c9a96e22" stroke-width="0.5"/>`;
+  });
+  // User polygon
+  const pts = layers.map((l,i)=>{
+    const r = (scores[l]/100) * maxR;
+    const rad = angles[i]*Math.PI/180;
+    return [cx + r*Math.cos(rad), cy + r*Math.sin(rad)];
+  }).map(p=>p.join(',')).join(' ');
+  html += `<polygon points="${pts}" fill="#c9a96e33" stroke="#c9a96e" stroke-width="1.5"/>`;
+  // Points
+  layers.forEach((l,i)=>{
+    const r = (scores[l]/100) * maxR;
+    const rad = angles[i]*Math.PI/180;
+    const x = cx + r*Math.cos(rad), y = cy + r*Math.sin(rad);
+    html += `<circle cx="${x}" cy="${y}" r="3" fill="#c9a96e"/>`;
+  });
+  // Labels
+  layers.forEach((l,i)=>{
+    const rad = angles[i]*Math.PI/180;
+    const lx = cx + (maxR+22)*Math.cos(rad);
+    const ly = cy + (maxR+22)*Math.sin(rad) + 4;
+    html += `<text x="${lx}" y="${ly}" text-anchor="middle" fill="#c9a96e" font-family="JetBrains Mono,monospace" font-size="12" letter-spacing="2" font-weight="500">${labels[i]}</text>`;
+    // Score
+    html += `<text x="${lx}" y="${ly+16}" text-anchor="middle" fill="#e6dfd0" font-family="JetBrains Mono,monospace" font-size="12">${scores[l]}</text>`;
+  });
+  svg.innerHTML = html;
+}
+
+function restart(){
+  history.replaceState({},'',window.location.pathname);
+  show('screen-intro');
+}
+
+/* ═══════════════════════════════════════════════════
+   SHARE MECHANISMS (A · card / B · link / C · text)
+═══════════════════════════════════════════════════ */
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2200);
+}
+
+/* A · Download Persona Signature Card (1080×1350 PNG via html2canvas) */
+async function downloadCard(){
+  if(!lastResult){return;}
+  if(typeof html2canvas === 'undefined'){
+    showToast('截圖套件載入中，請再試一次');
+    return;
+  }
+  showToast('正在生成卡片⋯');
+  const card = document.getElementById('share-card');
+  try{
+    const canvas = await html2canvas(card, {
+      backgroundColor: '#0a0a1a',
+      scale: 1.5,
+      useCORS: true,
+      logging: false,
+      width: 1080,
+      height: 1350,
+      windowWidth: 1080,
+      windowHeight: 1350
+    });
+    canvas.toBlob(blob=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `AI_Persona_${lastResult.sig.zh}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('卡片已下載');
+    }, 'image/png');
+  }catch(e){
+    console.error(e);
+    showToast('生成失敗，請再試一次');
+  }
+}
+
+/* B · Copy share link (URL with ?p= encoded answers) */
+async function copyShareLink(){
+  if(!lastResult){return;}
+  const code = encodeAnswers(answers);
+  const url = getShareUrl(code);
+  try{
+    await navigator.clipboard.writeText(url);
+    showToast('連結已複製');
+  }catch(e){
+    fallbackCopy(url);
+    showToast('連結已複製');
+  }
+}
+
+/* C · Copy share text (with native Web Share if available) */
+async function copyShareText(){
+  if(!lastResult){return;}
+  const sig = lastResult.sig;
+  const quote = (lastDisplay && lastDisplay.quote) || sig.quotes[0];
+  const code = encodeAnswers(answers);
+  const url = getShareUrl(code);
+  const text = `我是「${sig.zh}」${sig.en}\n\n${quote}\n\n看你的 Persona →\n${url}`;
+  // Try native Web Share first (mobile)
+  if(navigator.share){
+    try{
+      await navigator.share({title:`我是「${sig.zh}」`, text:text.split('\n看你的')[0], url:url});
+      return;
+    }catch(e){/* fallthrough to clipboard */}
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('分享文字已複製');
+  }catch(e){
+    fallbackCopy(text);
+    showToast('分享文字已複製');
+  }
+}
+
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position='fixed';
+  ta.style.left='-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT (check URL for friend link)
+═══════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', ()=>{
+  checkFriendUrl();
+});
+</script>
+</body>
+</html>
